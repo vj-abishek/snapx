@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <video id="screenVideo" width="1920" height="1080" autoplay hidden></video>
+    <video id="userVideo" width="640" height="480" autoplay hidden></video>
+    <canvas id="canvas" width="1920" height="1080"></canvas>
+    <button id="stop">Stop</button>
+    <script defer>
+      const main = async () => {
+        const chunks = [];
+        const constraints = {
+          video: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            displaySurface: "monitor",
+            cursor: "always",
+          },
+        };
+        const userMediaOptions = { video: true, audio: true };
+
+        const screenVideoEl = document.getElementById("screenVideo");
+        const userVideoEl = document.getElementById("userVideo");
+        const canvasEl = document.getElementById("canvas");
+
+        const screenStream = await navigator.mediaDevices.getDisplayMedia(
+          constraints
+        );
+        const userStream = await navigator.mediaDevices.getUserMedia(
+          userMediaOptions
+        );
+
+        screenVideoEl.srcObject = screenStream;
+        userVideoEl.srcObject = userStream;
+
+        const ctx = canvasEl.getContext("2d");
+
+        screenVideoEl.addEventListener("play", () => {
+          const draw = () => {
+            ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            ctx.drawImage(screenVideoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+            // Draw the user video at the bottom right in a rounded shape
+            const radius = 100; // change this to your desired radius
+            const userVideoWidth = 320; // change this to your desired width
+            const userVideoHeight = 240; // change this to your desired height
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(
+              canvasEl.width - radius,
+              canvasEl.height - radius,
+              radius,
+              0,
+              Math.PI * 2,
+              true
+            );
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(
+              userVideoEl,
+              canvasEl.width - userVideoWidth,
+              canvasEl.height - userVideoHeight,
+              userVideoWidth + 20,
+              userVideoHeight + 20
+            );
+            ctx.restore();
+
+            requestAnimationFrame(draw);
+          };
+          draw();
+        });
+
+        const combinedStream = new MediaStream([
+          ...screenStream.getTracks(),
+          ...userStream.getTracks(),
+        ]);
+
+        const str = canvasEl.captureStream(25);
+        console.log(str);
+
+        const rcdr = new MediaRecorder(str);
+
+        rcdr.addEventListener("stop", () => {
+          const blob = new Blob(chunks, { type: "video/mp4" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "screen_record.mp4";
+          document.body.appendChild(a);
+          a.click();
+          URL.revokeObjectURL(url);
+          chunks.length = 0;
+        });
+
+        rcdr.start(1000);
+
+        rcdr.addEventListener("dataavailable", (e) => {
+          chunks.push(e.data);
+        });
+
+        setTimeout(() => {
+          console.log("stopped");
+          rcdr.stop();
+        }, 5000);
+      };
+
+      main();
+    </script>
+  </body>
+</html>

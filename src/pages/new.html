@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <video id="screenVideo" width="640" height="480" autoplay></video>
+    <video id="userVideo" width="320" height="240" autoplay></video>
+    <button id="startBtn">startBtn</button>
+    <button id="stopBtn">stopBtn</button>
+
+    <!-- <script defer>
+      const screenVideoEl = document.getElementById("screenVideo");
+      const userVideoEl = document.getElementById("userVideo");
+
+      navigator.mediaDevices
+        .getDisplayMedia({ video: true })
+        .then((stream) => {
+          screenVideoEl.srcObject = stream;
+          return navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        })
+        .then((userStream) => {
+          userVideoEl.srcObject = userStream;
+          userVideoEl.play();
+        })
+        .catch((err) => {
+          console.error("Error: " + err);
+        });
+
+      userVideoEl.addEventListener("loadedmetadata", () => {
+        userVideoEl.style.position = "absolute";
+        userVideoEl.style.bottom = "20px";
+        userVideoEl.style.right = "20px";
+      });
+
+      screenVideoEl.addEventListener("play", () => {
+        const canvasEl = document.createElement("canvas");
+        canvasEl.width = screenVideoEl.videoWidth;
+        canvasEl.height = screenVideoEl.videoHeight;
+        const ctx = canvasEl.getContext("2d");
+
+        const draw = () => {
+          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+          ctx.drawImage(screenVideoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+          requestAnimationFrame(draw);
+        };
+
+        userVideoEl.addEventListener("play", () => {
+          draw();
+        });
+      });
+    </script> -->
+    <script defer>
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+
+      let screenStream, userStream, mediaRecorder;
+      let recordedChunks = [];
+
+      startBtn.addEventListener("click", async () => {
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: { width: 1280, height: 720 },
+          });
+
+          userStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+
+          const screenVideo = document.createElement("video");
+          screenVideo.srcObject = screenStream;
+          screenVideo.play();
+
+          const userVideo = document.createElement("video");
+          userVideo.srcObject = userStream;
+          userVideo.play();
+
+          const canvas = document.createElement("canvas");
+          canvas.width = 1280;
+          canvas.height = 720;
+          const ctx = canvas.getContext("2d");
+
+          mediaRecorder = new MediaRecorder(
+            new MediaStream([
+              ...screenStream.getTracks(),
+              ...userStream.getTracks(),
+            ])
+          );
+
+          mediaRecorder.addEventListener("dataavailable", (e) => {
+            recordedChunks.push(e.data);
+          });
+
+          mediaRecorder.addEventListener("stop", () => {
+            const blob = new Blob(recordedChunks, { type: "video/mp4" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "screen_record.mp4";
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            recordedChunks = [];
+          });
+
+          mediaRecorder.start();
+
+          const draw = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+
+            const radius = 100;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(
+              canvas.width - radius,
+              canvas.height - radius,
+              radius,
+              0,
+              Math.PI * 2,
+              true
+            );
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(
+              userVideo,
+              canvas.width - radius * 2,
+              canvas.height - radius * 2,
+              radius * 2,
+              radius * 2
+            );
+            ctx.restore();
+
+            requestAnimationFrame(draw);
+          };
+
+          draw();
+        } catch (err) {
+          console.error(err);
+        }
+      });
+
+      stopBtn.addEventListener("click", () => {
+        mediaRecorder.stop();
+      });
+    </script>
+  </body>
+</html>

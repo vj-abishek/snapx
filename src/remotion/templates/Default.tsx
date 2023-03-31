@@ -12,7 +12,7 @@ export default function Default({ screenURL, videoURL }: Props) {
       style={{
         background: "linear-gradient(to right, #5D26C1, #a17fe0, #59C173)",
       }}
-      className="flex items-center justify-center"
+      className="flex w-full items-center justify-center"
     >
       {screenURL && videoURL && (
         <>

@@ -104,6 +104,26 @@ export const videoRouter = createTRPCRouter({
       });
     }),
 
+  getPublicVideo: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(({ input, ctx }) => {
+      if (!input.id) {
+        return null;
+      }
+      return ctx.prisma.video.findUnique({
+        where: {
+          id: input.id,
+        },
+        include: {
+          user: true,
+        },
+      });
+    }),
+
   getThumbnail: protectedProcedure
     .input(
       z.object({
@@ -121,7 +141,7 @@ export const videoRouter = createTRPCRouter({
       return null;
     }),
 
-  getURL: protectedProcedure
+  getURL: publicProcedure
     .input(
       z.object({
         id: z.string().optional(),

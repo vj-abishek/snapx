@@ -30,7 +30,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
       </Head>
 
       <div className={`font-dmSans flex flex-auto`}>
-        <div className="fixed top-0 left-0 flex h-screen w-screen items-center justify-center bg-primary-100 text-center text-4xl text-primary-900 lg:hidden">
+        <div className="fixed top-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-primary-100 text-center text-4xl text-primary-900 lg:hidden">
           We are not avaliable for mobile devices yet. Please use a desktop
         </div>
         {Layouts.includes(router.pathname) && <Layout />}

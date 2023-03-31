@@ -21,8 +21,8 @@ const server = z.object({
   // Add `.min(1) on ID and SECRET if you want to make sure they're not empty
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
-  AWS_SECRET_KEY: z.string(),
-  AWS_ACCESS_KEY: z.string(),
+  AWS_S3_SECRET_KEY: z.string(),
+  AWS_S3_ACCESS_KEY: z.string(),
 });
 
 /**
@@ -48,8 +48,8 @@ const processEnv = {
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-  AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
-  AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+  AWS_S3_SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
+  AWS_S3_ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 };

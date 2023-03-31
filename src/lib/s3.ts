@@ -20,8 +20,8 @@ class S3 {
     this.s3 = new S3Client({
       region: "ap-south-1",
       credentials: {
-        accessKeyId: env.AWS_ACCESS_KEY,
-        secretAccessKey: env.AWS_SECRET_KEY,
+        accessKeyId: env.AWS_S3_ACCESS_KEY,
+        secretAccessKey: env.AWS_S3_SECRET_KEY,
       },
     });
   }

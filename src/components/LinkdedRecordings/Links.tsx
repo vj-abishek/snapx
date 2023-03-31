@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import type { InstantLink } from "@prisma/client";
@@ -6,7 +8,13 @@ import { useRouter } from "next/router";
 import * as timeago from "timeago.js";
 
 interface Props {
-  data: InstantLink[] | undefined;
+  data:
+    | (InstantLink & {
+        _count: {
+          video: number;
+        };
+      })[]
+    | undefined;
 }
 
 function pluralizeString(str: string, length: number) {

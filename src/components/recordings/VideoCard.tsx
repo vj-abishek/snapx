@@ -28,7 +28,7 @@ export default function VideoCard({ video }: Props) {
             className="h-full w-full object-cover"
             alt={video.title}
             loading="lazy"
-            src={`/api/image?id=${video.thumbnail as string}`}
+            src={`/api/image?id=${video.thumbnail}`}
           />
         ) : (
           <Image

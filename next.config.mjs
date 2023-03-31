@@ -31,6 +31,10 @@ const config = {
         source: "/r/:path*",
         destination: "/record/:path*",
       },
+      {
+        source: '/',
+        destination: '/register'
+      }
     ];
   }
 };

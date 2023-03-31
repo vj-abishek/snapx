@@ -31,7 +31,7 @@ export default function DynamicVideo({
   }
 
   return (
-    <AbsoluteFill cl>
+    <AbsoluteFill>
       <Default
         screenURL={screenURL?.data?.signedUrl || null}
         videoURL={videoURL?.data?.signedUrl || null}

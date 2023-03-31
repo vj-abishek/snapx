@@ -20,7 +20,7 @@ export enum Frame {
 
 interface Props {
   title: string | undefined;
-  description: string | undefined;
+  description: string | undefined | null;
 }
 
 export default function Record({ title, description }: Props) {

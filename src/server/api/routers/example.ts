@@ -12,7 +12,7 @@
 //     }),
 
 //   getAll: publicProcedure.query(({ ctx }) => {
-//     return ctx.prisma.example.findMany();
+//     return ctx.prisma.video.findMany();
 //   }),
 
 //   getSecretMessage: protectedProcedure.query(() => {
@@ -20,4 +20,4 @@
 //   }),
 // });
 
-export {}
+export {};

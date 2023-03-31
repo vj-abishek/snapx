@@ -1,2 +1,2 @@
-const Layouts = ["/dashboard", "/ui"];
+const Layouts = ["/dashboard", "/ui", "/video/[id]", "/home"];
 export default Layouts;

@@ -18,13 +18,14 @@ module.exports = {
         'dark-accent': '#363129'
       },
       fontFamily: {
-        dmSans: ['var(--font-dm-sans)'],
-        heading: ['var(--font-poppins)'],
+        // dmSans: ["'Open Sans', sans-serif"],
+        // heading: ["'Open Sans', sans-serif"],
       },
     },
   },
   variants: {},
   plugins: [
-    require('@tailwindcss/typography')
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/line-clamp'),
   ],
 };

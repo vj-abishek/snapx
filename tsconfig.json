@@ -21,7 +21,9 @@
       "@/components/*": ["src/components/*"],
       "@/pages/*": ["src/pages/*"],
       "@/lib/*": ["src/lib/*"],
-      "@/utils/*": ["src/utils/*"]
+      "@/utils/*": ["src/utils/*"],
+      "@/assets/*": ["src/assets/*"],
+      "@/remotion/*": ["src/remotion/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs"],

@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
+import { supabase } from "@/lib/supabaseClient";
 import { trpcClient } from "@/utils/api";
-import { nanoid } from "nanoid";
+import { customAlphabet, nanoid } from "nanoid";
+import { EventEmitter } from "events";
+import Timer from "easytimer.js";
+import Router from "next/router";
+import generateTitle from "@/utils/generateTitle";
 
 export enum RecordingState {
   Waiting,
   Paused,
   Recording,
+  Uploading,
 }
 
 interface uploadData {
@@ -20,20 +26,25 @@ interface videoPartData {
   IsUploading?: boolean;
 }
 
-class UploadController {
+class UploadController extends EventEmitter {
   private videoRecorder: MediaRecorder | null = null;
   private screenRecorder: MediaRecorder | null = null;
   private videoChunks: Blob[] = [];
   private screenChunks: Blob[] = [];
   private videoStream: MediaStream | null = null;
   private screenStream: MediaStream | null = null;
-  private videoUploadData: uploadData | null = null;
-  private videoPartData: videoPartData[] = [];
-  private videoPartNumber = 0;
-  private bufferSize = 1024 * 1024 * 5; // 5MB
-  private buffer = Buffer.alloc(this.bufferSize);
-  private offset = 0;
+  private linkId: string | undefined = undefined;
+  private title: string | undefined = undefined;
+  private description: string | undefined = undefined;
+  private isStopped = false;
+  private timer = new Timer();
+  private thumbnail: string | undefined = undefined;
   recordingState: RecordingState = RecordingState.Waiting;
+
+  constructor() {
+    super();
+    this.handleTimerEvents();
+  }
 
   setStream(stream: MediaStream, type?: string) {
     if (!stream) return;
@@ -48,43 +59,8 @@ class UploadController {
   }
 
   setVideoRecorder(recorder: MediaRecorder) {
-    recorder.ondataavailable = async (event: BlobEvent) => {
-      const chunk = event.data;
-      const remainingSpace = this.bufferSize - this.offset;
-      const bytesToWrite = Math.min(chunk.size, remainingSpace);
-
-      console.log(
-        remainingSpace,
-        bytesToWrite,
-        chunk.size,
-        this.bufferSize,
-        this.offset
-      );
-
-      if (bytesToWrite > 0) {
-        // Copy the chunk to the buffer
-        const arrayBuffer = await new Response(chunk).arrayBuffer();
-        const source = new Uint8Array(arrayBuffer);
-
-        if (this.offset + bytesToWrite > this.bufferSize) {
-          // Wrap around to the beginning of the buffer
-          const firstChunkSize = this.bufferSize - this.offset;
-          this.buffer.set(source.slice(0, firstChunkSize), this.offset);
-          this.buffer.set(source.slice(firstChunkSize, bytesToWrite), 0);
-        } else {
-          this.buffer.set(source.slice(0, bytesToWrite), this.offset);
-        }
-
-        // Update the offset
-        this.offset = (this.offset + bytesToWrite) % this.bufferSize;
-
-        // Check if the buffer is full
-        if (this.offset === 0) {
-          const blob = new Blob([this.buffer], { type: "video/webm" });
-          this.uploadBuffer(blob).catch(console.error);
-          console.log("Buffer full");
-        }
-      }
+    recorder.ondataavailable = (event: BlobEvent) => {
+      this.videoChunks.push(event.data);
     };
     recorder.onstop = this.saveVideo.bind(this);
   }
@@ -92,35 +68,41 @@ class UploadController {
   setScreenRecorder(recorder: MediaRecorder) {
     recorder.ondataavailable = (event) => {
       this.screenChunks.push(event.data);
-      this.uploadChunks(this.screenChunks).catch((err) => console.log(err));
     };
-    recorder.onstop = this.saveVideo.bind(this, this.screenChunks);
+    recorder.onstop = this.saveVideo.bind(this);
   }
 
-  async start() {
+  start(
+    id: string | null = null,
+    title: string | null = null,
+    description: string | null = null
+  ) {
+    if (id && title) {
+      this.linkId = id;
+      this.title = title;
+      if (description) this.description = description;
+    }
+    this.timer.start();
+
     if (this.videoStream) {
       this.videoRecorder = new MediaRecorder(this.videoStream);
       this.setVideoRecorder(this.videoRecorder);
-      const id = this.generateUrlFriendlyString(nanoid, 15);
-      this.videoUploadData = await trpcClient.s3.init.mutate({
-        format: `${id}.webm`,
-        contentType: "video/webm",
-      });
       this.videoRecorder.start(5000);
-      this.recordingState = RecordingState.Recording;
+      this.emit("recordingStateChange", RecordingState.Recording);
     }
 
     if (this.screenStream) {
       this.screenRecorder = new MediaRecorder(this.screenStream);
       this.setScreenRecorder(this.screenRecorder);
-      const id = this.generateUrlFriendlyString(nanoid, 15);
-      this.videoUploadData = await trpcClient.s3.init.mutate({
-        format: `${id}.webm`,
-        contentType: "video/webm",
-      });
       this.screenRecorder.start(5000);
-      this.recordingState = RecordingState.Recording;
+      this.emit("recordingStateChange", RecordingState.Recording);
     }
+
+    this.generateThumbs()
+      .then((thumbnail) => {
+        this.thumbnail = thumbnail;
+      })
+      .catch(console.error);
   }
 
   stop() {
@@ -132,151 +114,177 @@ class UploadController {
     }
   }
 
-  private uploadChunks(chunks: Blob[]) {
-    this.videoPartNumber++;
+  cancel() {
+    this.videoRecorder = null;
+    this.screenRecorder = null;
+    this.videoChunks = [];
+    this.screenChunks = [];
 
-    if (this.videoPartNumber === 1) {
-      try {
-        console.log(this.videoUploadData);
-
-        if (chunks.length > 0) {
-          return;
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    }
-
-    console.log("calling upload");
+    this.timer.stop();
+    this.emit("recordingStateChange", RecordingState.Waiting);
   }
 
-  private async uploadBuffer(blob: Blob) {
-    try {
-      this.videoPartNumber += 1;
-
-      if (this.videoPartNumber === 1) {
-        console.log("init fn");
-        this.videoPartData.push({
-          PartNumber: this.videoPartNumber,
-          ETag: "",
-          IsUploading: true,
-        });
-
-        const response = await this.upload(
-          this.videoUploadData?.signedUrl,
-          blob
-        ).catch(console.error);
-
-        if (response?.status === 200) {
-          this.videoPartData = this.videoPartData.map((part) => {
-            if (part.PartNumber === this.videoPartNumber) {
-              part.IsUploading = false;
-              part.ETag = response.headers.get("ETag") || "";
-            }
-
-            return part;
-          });
-        }
-
-        return;
-      }
-
-      this.videoPartData.push({
-        PartNumber: this.videoPartNumber,
-        ETag: "",
-        IsUploading: true,
-      });
-
-      const uploadPart = await trpcClient.s3.uploadPart.mutate({
-        key: this.videoUploadData?.key || "",
-        uploadId: this.videoUploadData?.uploadId || "",
-        partNumber: this.videoPartNumber,
-      });
-
-      const response = await this.upload(uploadPart.signedUrl, blob).catch(
-        console.error
-      );
-
-      if (response?.status === 200) {
-        this.videoPartData = this.videoPartData.map((part) => {
-          if (part.PartNumber === this.videoPartNumber) {
-            part.IsUploading = false;
-            part.ETag = response.headers.get("ETag") || "";
-          }
-
-          return part;
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  private async upload(signedUrl: string | undefined, blob: Blob) {
-    if (!signedUrl) return;
-
-    const response = await fetch(signedUrl, {
-      method: "PUT",
-      body: blob,
-    });
-
-    return response;
-  }
-
-  private checkIfAllPartsAreUploaded() {
-    const interval = setInterval(() => {
-      console.log("checking", this.videoPartData);
-      if (this.videoPartData.some((part) => !part?.IsUploading)) {
-        this.saveVideo().catch(console.error);
-        clearInterval(interval);
-      }
-    }, 3000);
+  restart() {
+    this.cancel();
+    this.emit("action", "showCountDown");
   }
 
   private async saveVideo() {
-    // console.log(this.buffer, this.buffer.byteLength, this.buffer.byteOffset);
-    console.log("condition");
+    if (this.isStopped) return;
 
-    if (this.videoPartData.some((part) => part.IsUploading)) {
-      this.checkIfAllPartsAreUploaded();
-      return;
+    const timeValues = this.timer.getTimeValues();
+    const duration =
+      timeValues.hours * 3600 + timeValues.minutes * 60 + timeValues.seconds;
+
+    this.timer.stop();
+    this.emit("recordingStateChange", RecordingState.Uploading);
+    this.videoStream?.getTracks().forEach((track) => track.stop());
+    this.screenStream?.getTracks().forEach((track) => track.stop());
+
+    this.isStopped = true;
+    let videoBlob: Blob | null = null;
+    let screenBlob: Blob | null = null;
+
+    if (this.videoChunks.length > 0) {
+      videoBlob = new Blob(this.videoChunks, { type: "video/webm" });
     }
 
-    console.log(this.buffer);
-
-    if (this.buffer[0] === 0) {
-      const blob = new Blob([this.buffer], { type: "video/webm" });
-      console.log(blob);
-      await this.uploadBuffer(blob).catch(console.error);
-      console.log("Buffer full");
+    if (this.screenChunks.length > 0) {
+      screenBlob = new Blob(this.screenChunks, { type: "video/webm" });
     }
 
-    await trpcClient.s3.complete.mutate({
-      key: this.videoUploadData?.key || "",
-      uploadId: this.videoUploadData?.uploadId || "",
-      parts: this.videoPartData,
-    });
+    const id = nanoid(10);
 
-    this.recordingState = RecordingState.Waiting;
+    try {
+      let videoUid: string | undefined = undefined;
+      let screenUid: string | undefined = undefined;
+
+      if (videoBlob) {
+        const videoResponse = await supabase.storage
+          .from("videos")
+          .upload(`feed/video-${id}.webm`, videoBlob, {
+            contentType: "video/webm",
+            upsert: false,
+          });
+
+        videoUid = videoResponse.data?.path;
+      }
+
+      if (screenBlob) {
+        const screenResponse = await supabase.storage
+          .from("videos")
+          .upload(`screen/screen-${id}.webm`, screenBlob, {
+            contentType: "video/webm",
+            upsert: false,
+          });
+        screenUid = screenResponse.data?.path;
+      }
+
+      if (this.thumbnail) {
+        const imageBlob = await fetch(this.thumbnail).then((r) => r.blob());
+        await supabase.storage.from("thumbs").upload(`${id}.png`, imageBlob, {
+          contentType: "image/png",
+          upsert: false,
+        });
+      }
+
+      if (this.linkId) {
+        await trpcClient.video.addResponse
+          .mutate({
+            id,
+            title: generateTitle(this.title),
+            videoUid: videoUid || "",
+            screenUid: screenUid || "",
+            duration,
+            linkId: this.linkId,
+            description: this.description,
+            thumbnail: `${id}.png`,
+          })
+          .catch(console.error);
+      } else {
+        await trpcClient.video.add
+          .mutate({
+            id,
+            title: generateTitle(this.title),
+            videoUid: videoUid || "",
+            screenUid: screenUid || "",
+            duration,
+            linkId: this.linkId,
+            description: this.description,
+            thumbnail: `${id}.png`,
+          })
+          .catch(console.error);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
+    this.emit("recordingStateChange", RecordingState.Waiting);
+    this.screenStream?.getTracks().forEach((track) => track.stop());
+    this.videoStream?.getTracks().forEach((track) => track.stop());
+
     this.videoChunks = [];
     this.screenChunks = [];
     this.videoRecorder = null;
     this.screenRecorder = null;
     this.videoStream = null;
     this.screenStream = null;
-    this.videoPartNumber = 0;
+
+    Router.push(`/video/${id}`).catch(console.error);
   }
 
-  private generateUrlFriendlyString(
-    nanoidFn: (size: number) => string,
-    length: number
-  ): string {
-    const randomString = nanoidFn(length);
-    const text = randomString.replace(/[^a-z0-9\s-]/gi, "");
-    const hyphenatedText = text.replace(/\s+/g, "-");
-    const lowercaseText = hyphenatedText.toLowerCase();
-    const finalText = lowercaseText.replace(/--/g, "-");
-    return finalText;
+  private generateThumbs(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const videoFrame = document.getElementById(
+        "videoFrame"
+      ) as HTMLVideoElement;
+      const userFrame = document.getElementById(
+        "userFrame"
+      ) as HTMLVideoElement;
+      if (videoFrame) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 420;
+        canvas.height = 230;
+
+        const context = canvas.getContext("2d");
+        if (context) {
+          context.drawImage(videoFrame, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL("image/png");
+          resolve(dataUrl);
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 420;
+      canvas.height = 230;
+      const context = canvas.getContext("2d");
+      if (context) {
+        context.drawImage(userFrame, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/png");
+        resolve(dataUrl);
+      }
+    });
+  }
+
+  private handleTimerEvents() {
+    this.timer.addEventListener("secondsUpdated", (e) => {
+      this.emit("secondsUpdated", this.timer.getTimeValues().toString());
+      document.title = this.timer
+        .getTimeValues()
+        .toString(["minutes", "seconds"]);
+    });
+
+    this.timer.addEventListener("started", (e) => {
+      this.emit("started");
+    });
+
+    this.timer.addEventListener("reset", (e) => {
+      this.emit("reset");
+    });
+
+    this.timer.addEventListener("stopped", (e) => {
+      this.emit("stopped");
+    });
   }
 }
 

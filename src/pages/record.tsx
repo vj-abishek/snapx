@@ -1,12 +1,15 @@
 import Head from "next/head";
 import Controls from "@/components/ui/controls";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Player from "@/components/record/player";
 import uploadController, {
   RecordingState,
 } from "src/controller/upload-controller";
 import { api } from "@/utils/api";
 import { nanoid } from "nanoid";
+import Countdown from "@/components/countdown";
+import Loading from "@/components/loading";
+import { useRouter } from "next/router";
 
 export enum Frame {
   NoFrame,
@@ -15,10 +18,19 @@ export enum Frame {
   CameraAndScreen,
 }
 
-export default function Record() {
+interface Props {
+  title: string | undefined;
+  description: string | undefined;
+}
+
+export default function Record({ title, description }: Props) {
   const [currentFrame, setCurrentFrame] = useState([Frame.Video]);
   const [userStream, setUserStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [recordingState, setRecordingState] = useState(RecordingState.Waiting);
+  const [showCountDown, setShowCountDown] = useState(false);
+  const router = useRouter();
+  const { id } = router.query as { id: string };
 
   const changeFrame = useCallback(
     (newFrame: Frame) => {
@@ -63,6 +75,32 @@ export default function Record() {
     });
   }, [changeFrame, videoStream]);
 
+  useEffect(() => {
+    uploadController.on("recordingStateChange", set);
+
+    return () => {
+      uploadController.off("recordingStateChange", set);
+    };
+  }, [setRecordingState]);
+
+  useEffect(() => {
+    uploadController.on("action", setCount);
+
+    return () => {
+      uploadController.off("action", setCount);
+    };
+  });
+
+  const set = (state: RecordingState) => {
+    setRecordingState(state);
+  };
+
+  const setCount = (type: string) => {
+    if (type === "showCountDown") {
+      setShowCountDown(true);
+    }
+  };
+
   const setStream = (stream: MediaStream | null, type: string) => {
     if (type === "user") {
       setUserStream(stream);
@@ -80,22 +118,37 @@ export default function Record() {
   };
 
   const toggleRecording = () => {
-    if (uploadController.recordingState === RecordingState.Waiting) {
-      if (videoStream) {
-        uploadController.setStream(videoStream, "screen");
-      }
-      if (userStream) {
-        uploadController.setStream(userStream, "user");
-      }
-
-      uploadController.start();
+    if (recordingState === RecordingState.Waiting) {
+      setShowCountDown(true);
       return;
     }
 
-    if (uploadController.recordingState === RecordingState.Recording) {
+    if (recordingState === RecordingState.Recording) {
       uploadController.stop();
       return;
     }
+  };
+
+  const startRecording = () => {
+    setShowCountDown(false);
+    if (videoStream) {
+      uploadController.setStream(videoStream, "screen");
+    }
+    if (userStream) {
+      uploadController.setStream(userStream, "user");
+    }
+
+    uploadController.start(id, title, description);
+  };
+
+  const cancelFn = () => {
+    uploadController.cancel();
+    setRecordingState(RecordingState.Waiting);
+  };
+
+  const restartFn = () => {
+    uploadController.restart();
+    setRecordingState(RecordingState.Waiting);
   };
 
   return (
@@ -127,7 +180,13 @@ export default function Record() {
           setStream={setStream}
           getStream={getStream}
           toggleRecording={toggleRecording}
+          recordingState={recordingState}
+          cancelFn={cancelFn}
+          restartFn={restartFn}
         />
+
+        {showCountDown && <Countdown start={startRecording} />}
+        {recordingState === RecordingState.Uploading && <Loading />}
       </div>
     </>
   );

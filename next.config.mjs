@@ -20,5 +20,18 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+
+  experimental: {
+    scrollRestoration: true,
+  },
+
+  rewrites: async () => {
+    return [
+      {
+        source: "/r/:path*",
+        destination: "/record/:path*",
+      },
+    ];
+  }
 };
 export default config;

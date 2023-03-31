@@ -1,5 +1,6 @@
 import { createTRPCRouter } from "./trpc";
 import { S3Client } from "./routers/s3/init";
+import { videoRouter } from "./routers/video";
 // import { exampleRouter } from "./routers/example";
 
 /**
@@ -10,6 +11,7 @@ import { S3Client } from "./routers/s3/init";
 export const appRouter = createTRPCRouter({
   // example: exampleRouter,
   s3: S3Client,
+  video: videoRouter,
 });
 
 // export type definition of API

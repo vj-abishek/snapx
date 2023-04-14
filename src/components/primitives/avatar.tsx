@@ -7,7 +7,7 @@ interface AvatarProps {
 
 export default function Image({ src, alt }: AvatarProps) {
   return (
-    <Avatar.Root className="AvatarRoot">
+    <Avatar.Root className="AvatarRoot flex-shrink-0">
       <Avatar.Image
         className="AvatarImage"
         src={src || undefined}

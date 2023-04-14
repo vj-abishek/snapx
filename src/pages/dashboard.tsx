@@ -2,7 +2,12 @@ import { useSession } from "next-auth/react";
 import Head from "next/head";
 import MenuButton from "@/components/ui/menu";
 import { Menu, Tab } from "@headlessui/react";
-import { BoltIcon, ClockIcon, LinkIcon } from "@heroicons/react/20/solid";
+import {
+  Bars3Icon,
+  BoltIcon,
+  ClockIcon,
+  LinkIcon,
+} from "@heroicons/react/20/solid";
 import { Fragment, useEffect, useState } from "react";
 import CreatedVideos from "@/components/recordings/createdVideos";
 import type { GetServerSideProps } from "next";
@@ -11,6 +16,7 @@ import VideoLoading from "@/components/recordings/VideoLoading";
 import { useRouter } from "next/router";
 import Links from "@/components/LinkdedRecordings/Links";
 import LinkedVideos from "@/components/LinkdedRecordings/LinkdedVideos";
+import Header from "@/components/header";
 
 export default function Dashboard() {
   const { data: sessionData } = useSession();
@@ -58,14 +64,18 @@ export default function Dashboard() {
         <title>Library | Snapx</title>
       </Head>
       <div className="container mx-auto min-h-screen w-full max-w-[70rem]  p-3 sm:p-4">
-        <h1 className="font-heading text-4xl font-semibold">My Library</h1>
+        <Header>
+          <h1 className="font-heading text-2xl font-semibold lg:text-4xl">
+            My Library
+          </h1>
+        </Header>
         <Tab.Group
           selectedIndex={selectedIndex || 0}
           onChange={handleTabChange}
         >
           <Tab.List
             className={
-              "mt-9 flex w-max gap-1 space-x-1 rounded-xl bg-primary-100/20 p-1"
+              "lg:mt- sticky top-2 z-10 mt-2 flex w-max gap-1 space-x-1 rounded-xl bg-primary-100/20 p-1"
             }
           >
             <Tab as={Fragment}>

@@ -13,21 +13,26 @@ export default function player({ currentFrame }: Props) {
       <div
         key={frame}
         className={`
-          ml-auto mr-auto
+          ml-auto mr-auto h-screen w-screen lg:h-auto lg:w-auto flex items-center
         ${
           isCamNScreen && frame === Frame.Video
-            ? "order-2 m-auto aspect-[9/16] h-[85%] "
+            ? "order-2 m-auto aspect-[9/16] !h-[85%] "
             : "aspect-video"
         }
       `}
       >
         <video
           id={videoId}
-          className={`h-full w-full rounded-md
+          className={`h-full w-full rounded-md object-cover lg:object-contain
             ${videoId === "userFrame" ? "scale-x-[-1]" : ""}
             ${
               frame === Frame.Video && currentFrame.length > 1
-                ? " object-cover"
+                ? "!object-cover"
+                : ""
+            }
+            ${
+              frame === Frame.Screen && currentFrame.length > 1
+                ? "!object-contain lg:!object-cover !h-[85%]"
                 : ""
             }
           `}

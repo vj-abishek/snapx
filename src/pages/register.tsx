@@ -1,15 +1,21 @@
 import { signIn, useSession } from "next-auth/react";
 import { BoltIcon } from "@heroicons/react/20/solid";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
 export default function Register() {
   const { data: sessionData } = useSession();
-  if (sessionData) {
-    window.location.href = "/dashboard";
-  }
+  const router = useRouter();
+
+  useEffect(() => {
+    if (sessionData) {
+      router.push("/dashboard").catch(console.error);
+    }
+  }, [router, sessionData]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center">
-      <h1 className="max-w-3xl p-3 text-center font-heading">
+    <div className="flex h-[100dvh] w-full flex-col items-center justify-center">
+      <h1 className="font-heading max-w-3xl p-3 text-center">
         Record, Share, Collaborate
         <br />
         Join SnapScreen Today!

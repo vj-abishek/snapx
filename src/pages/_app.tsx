@@ -30,13 +30,13 @@ const MyApp: AppType<{ session: Session | null }> = ({
       </Head>
 
       <div className={`font-dmSans flex flex-auto`}>
-        <div className="fixed top-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-primary-100 text-center text-4xl text-primary-900 lg:hidden">
+        {/* <div className="fixed top-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-primary-100 text-center text-4xl text-primary-900 lg:hidden">
           We are not avaliable for mobile devices yet. Please use a desktop
-        </div>
+        </div> */}
         {Layouts.includes(router.pathname) && <Layout />}
         <main
-          className={`w-full shadow-xl dark:bg-primary-100 dark:text-gray-100 ${
-            Layouts.includes(router.pathname) ? "pl-[15rem]" : ""
+          className={`w-full dark:bg-primary-100 dark:text-gray-100 ${
+            Layouts.includes(router.pathname) ? "lg:pl-[15rem]" : ""
           }`}
         >
           <Component {...pageProps} />

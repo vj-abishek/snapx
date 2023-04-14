@@ -80,7 +80,7 @@ export default function ShowVideo() {
         <Head>
           <title>{videoInfo.data?.title}</title>
         </Head>
-        <div className="container mx-auto min-h-screen w-full  max-w-[70rem] p-3  sm:p-4">
+        <div className="container mx-auto min-h-screen w-full  max-w-[70rem] p-2 sm:p-4  lg:p-3">
           <div className="w-full max-w-5xl">
             {videoInfo.isLoading || !videoInfo?.data?.duration ? (
               <div className="aspect-video h-full w-full animate-pulse rounded-xl bg-primary-200"></div>
@@ -101,7 +101,7 @@ export default function ShowVideo() {
                 }}
               />
             )}
-            <div className="mt-3 flex w-full flex-row justify-between">
+            <div className="mt-3 flex w-full flex-col justify-between lg:flex-row">
               <div className="flex flex-row">
                 <Avatar
                   src={videoInfo.data?.user?.image}
@@ -120,7 +120,7 @@ export default function ShowVideo() {
               </div>
               <button
                 onClick={toggleShareModal}
-                className="btn btn-primary flex flex-row items-center justify-center gap-3"
+                className="btn btn-primary mt-3 flex flex-row items-center justify-center gap-3 lg:mt-0"
               >
                 <LinkIcon className="h-5 w-5" />
                 <span>Share video</span>
@@ -134,68 +134,70 @@ export default function ShowVideo() {
           </div>
         </div>
 
-        <MyDialog
-          title="Share"
-          open={shareModalOpen}
-          onClose={toggleShareModal}
-        >
-          <div className="mt-5">
-            <div className="flex w-full flex-row gap-1">
-              <input
-                id="emailId"
-                disabled
-                title={getVideoURL()}
-                placeholder="acme@company.com"
-                type="url"
-                value={getVideoURL()}
-                className="input flex-1"
-              />
-              <button
-                className="btn btn-primary"
-                onClick={() => void handleCopyLink()}
-              >
-                <div className="flex flex-row items-center justify-center gap-1 ">
-                  <div className="flex-shrink-0">{copyLinkText}</div>
-                </div>
-              </button>
-            </div>
-            <div className="mt-3">
-              <p className="pl-1 text-sm text-primary-300">
-                Choose a destination...
-              </p>
-              <div className="cursor-pointer pt-2 text-primary-200">
-                <div
-                  onClick={() => void copyEmbedCode()}
-                  className="group flex flex-row items-center gap-5 rounded-md px-3 py-2 hover:bg-gray-100"
+        {shareModalOpen && (
+          <MyDialog
+            title="Share"
+            open={shareModalOpen}
+            onClose={toggleShareModal}
+          >
+            <div className="mt-5">
+              <div className="flex w-full flex-col gap-1 lg:flex-row">
+                <input
+                  id="emailId"
+                  disabled
+                  title={getVideoURL()}
+                  placeholder="acme@company.com"
+                  type="url"
+                  value={getVideoURL()}
+                  className="input flex-1"
+                />
+                <button
+                  className="btn btn-primary"
+                  onClick={() => void handleCopyLink()}
                 >
-                  <CodeBracketIcon className="h-5 w-5" />
-                  <div>Copy embed code</div>
-                  <ClipboardIcon className="ml-auto hidden h-5 w-5 group-hover:block" />
-                </div>
-                <div
-                  onClick={handleTwitterClick}
-                  className="group flex flex-row items-center gap-5 rounded-md px-3 py-2 hover:bg-gray-100"
-                >
-                  <div className="text-xl">
-                    <i className="ri-twitter-line ri-1x text-current"></i>
+                  <div className="flex flex-row items-center justify-center gap-1 ">
+                    <div className="flex-shrink-0">{copyLinkText}</div>
                   </div>
-                  <div>Share in twitter</div>
-                  <ArrowTopRightOnSquareIcon className="ml-auto hidden h-5 w-5 group-hover:block" />
-                </div>
-                <div
-                  onClick={handleLinkedInClick}
-                  className="group flex flex-row items-center gap-5 rounded-md px-3 py-2 hover:bg-gray-100"
-                >
-                  <div className="text-xl">
-                    <i className="ri-linkedin-line ri-1x text-current"></i>
+                </button>
+              </div>
+              <div className="mt-3">
+                <p className="pl-1 text-sm text-primary-300">
+                  Choose a destination...
+                </p>
+                <div className="cursor-pointer pt-2 text-primary-200">
+                  <div
+                    onClick={() => void copyEmbedCode()}
+                    className="group flex flex-row items-center gap-5 rounded-md px-3 py-2 hover:bg-gray-100"
+                  >
+                    <CodeBracketIcon className="h-5 w-5" />
+                    <div>Copy embed code</div>
+                    <ClipboardIcon className="ml-auto hidden h-5 w-5 group-hover:block" />
                   </div>
-                  <div>Share in linkedin</div>
-                  <ArrowTopRightOnSquareIcon className="ml-auto hidden h-5 w-5 group-hover:block" />
+                  <div
+                    onClick={handleTwitterClick}
+                    className="group flex flex-row items-center gap-5 rounded-md px-3 py-2 hover:bg-gray-100"
+                  >
+                    <div className="text-xl">
+                      <i className="ri-twitter-line ri-1x text-current"></i>
+                    </div>
+                    <div>Share in twitter</div>
+                    <ArrowTopRightOnSquareIcon className="ml-auto hidden h-5 w-5 group-hover:block" />
+                  </div>
+                  <div
+                    onClick={handleLinkedInClick}
+                    className="group flex flex-row items-center gap-5 rounded-md px-3 py-2 hover:bg-gray-100"
+                  >
+                    <div className="text-xl">
+                      <i className="ri-linkedin-line ri-1x text-current"></i>
+                    </div>
+                    <div>Share in linkedin</div>
+                    <ArrowTopRightOnSquareIcon className="ml-auto hidden h-5 w-5 group-hover:block" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </MyDialog>
+          </MyDialog>
+        )}
       </>
     )
   );

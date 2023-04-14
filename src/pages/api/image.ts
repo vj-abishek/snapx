@@ -6,12 +6,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
   const { id } = req.query;
 
   if (!id) {
@@ -35,7 +29,7 @@ export default async function handler(
     }
 
     const d = await response.arrayBuffer();
-    res.setHeader("Cache-Control", "public, max-age=300");
+    res.setHeader("Cache-Control", "public, max-age=604800");
     res.end(Buffer.from(d));
   }
 }

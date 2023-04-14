@@ -230,7 +230,8 @@ class UploadController extends EventEmitter {
     this.videoStream = null;
     this.screenStream = null;
 
-    Router.push(`/video/${id}`).catch(console.error);
+    // Router.push(`/video/${id}`).catch(console.error);
+    window.location.href = `/video/${id}`;
   }
 
   private generateThumbs(): Promise<string> {

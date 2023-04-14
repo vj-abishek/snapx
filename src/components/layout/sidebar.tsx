@@ -12,21 +12,30 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Avatar from "@/components/primitives/avatar";
 import Linkmodal from "../ui/linkmodal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function Sidebar() {
+interface Props {
+  isDrawer?: boolean;
+}
+
+export default function Sidebar({ isDrawer = false }: Props) {
   const { data: sessionData } = useSession();
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
 
   const onClose = () => {
-    setOpen(!open);
+    setOpen(false);
   };
 
   return (
     <>
-      <div className="font-dmSans fixed min-h-screen w-[4rem] flex-shrink-0 bg-primary-800 py-1 dark:bg-primary-200 dark:text-primary-900  lg:w-[15rem] lg:px-3 lg:py-8">
+      <div
+        style={{ minHeight: "100dvh" }}
+        className={`${
+          isDrawer ? "" : "hidden lg:block"
+        } font-dmSans fixed z-10 h-full min-h-screen w-[15rem] flex-shrink-0 bg-primary-800 px-3 py-8 shadow-2xl dark:bg-primary-200 dark:text-primary-900 lg:left-0 lg:shadow-none`}
+      >
         <div className="mb-4 pl-2 text-3xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -144,7 +153,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <Linkmodal open={open} onClose={onClose} />
+      {open && <Linkmodal open={open} onClose={onClose} />}
     </>
   );
 }

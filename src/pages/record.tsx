@@ -157,9 +157,9 @@ export default function Record({ title, description }: Props) {
         <title>SnapX - 🚀 Record your video</title>
       </Head>
       <div className="min-h-screen w-full bg-primary-700 text-primary-900 ">
-        <div className="flex h-[80vh] flex-col items-center justify-center bg-primary-100 text-center">
+        <div className="flex h-[100dvh] flex-col items-center justify-center bg-primary-100 text-center lg:h-[80vh]">
           {currentFrame.length ? (
-            <div className="flex h-full w-full flex-row ">
+            <div className="flex h-full w-full flex-col lg:flex-row ">
               <Player currentFrame={currentFrame} />
             </div>
           ) : (

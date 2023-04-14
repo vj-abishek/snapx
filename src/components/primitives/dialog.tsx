@@ -17,6 +17,18 @@ export default function MyDialog({
   onClose,
   canClose: canClose = true,
 }: Props) {
+  useEffect(() => {
+    const handlePopstate = () => {
+      onClose();
+    };
+
+    window.addEventListener("popstate", handlePopstate);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopstate);
+    };
+  }, []);
+
   return (
     <>
       <Transition appear show={open} as={Fragment}>
@@ -38,10 +50,10 @@ export default function MyDialog({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-[rgba(0,0,0,0.502)] bg-opacity-25" />
+            <div className="fixed inset-0 z-20 bg-[rgba(0,0,0,0.502)] bg-opacity-25" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
+          <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}

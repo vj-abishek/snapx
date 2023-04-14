@@ -36,6 +36,7 @@ export default function Controls({
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
 
   const getVideoStream = async () => {
+    console.log("again got camera");
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
@@ -58,7 +59,11 @@ export default function Controls({
   };
 
   useEffect(() => {
-    if (frame.includes(Frame.Video) && !getStream("user")) {
+    if (
+      recordingState === RecordingState.Waiting &&
+      frame.includes(Frame.Video) &&
+      !getStream("user")
+    ) {
       getVideoStream()
         .then((stream) => {
           window.setTimeout(() => {
@@ -82,7 +87,11 @@ export default function Controls({
         });
     }
 
-    if (frame.includes(Frame.Screen) && !getStream("screen")) {
+    if (
+      recordingState === RecordingState.Waiting &&
+      frame.includes(Frame.Screen) &&
+      !getStream("screen")
+    ) {
       getScreenStream()
         .then((stream) => {
           window.setTimeout(() => {
@@ -192,8 +201,8 @@ export default function Controls({
             </div>
           </>
         ) : (
-          <div
-            className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg px-4 py-2 hover:bg-primary-700/[0.12]"
+          <button
+            className="group flex cursor-not-allowed flex-col items-center justify-center gap-1 rounded-lg px-4 py-2 hover:bg-primary-700/[0.12] lg:cursor-pointer"
             onClick={() => changeFrame(Frame.Screen)}
           >
             <svg
@@ -209,7 +218,7 @@ export default function Controls({
             ) : (
               <span>Share screen</span>
             )}
-          </div>
+          </button>
         )}
       </div>
     </div>

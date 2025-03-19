@@ -10,21 +10,20 @@ export default function Countdown({ start }: Props) {
   useEffect(() => {
     document.title = `Counting down...`;
 
-    let interval: NodeJS.Timer | null = null;
-    interval = setInterval(() => {
+    const interval = setInterval(() => {
       setNumber((prev) => prev - 1);
     }, 1000);
 
     if (number === 0) {
-      clearInterval(interval || 0);
+      clearInterval(interval);
       start && start();
     }
 
-    return () => clearInterval(interval || 0);
+    return () => clearInterval(interval);
   }, [number, start]);
 
   return (
-    <div className="fixed top-0 left-0 z-50 flex h-full w-full items-center justify-center bg-gray-500/50 font-dmSans text-[14rem] font-bold backdrop-blur-lg ">
+    <div className="font-dmSans fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-gray-500/50 text-[14rem] font-bold backdrop-blur-lg ">
       {number}
     </div>
   );

@@ -106,7 +106,8 @@ export default function Linkmodal({ open, onClose }: Props) {
               </div>
               <p>
                 <span className="pl-1 text-sm text-xs text-gray-500">
-                  {linkMutation.data?.expiresAt === "never"
+                  {typeof linkMutation.data?.expiresAt === "string" &&
+                  linkMutation.data.expiresAt === "never"
                     ? "Your link will never expire"
                     : `Your link will expire on ${timeago.format(
                         linkMutation?.data?.expiresAt || "never"

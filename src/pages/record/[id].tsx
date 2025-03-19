@@ -72,7 +72,8 @@ export default function RecordWithId({ linkInfo }: Props) {
               <div className="mt-2">
                 <p className="pl-1 text-xs text-primary-400">
                   {parsedLinkInfo?.expiresAt &&
-                    parsedLinkInfo?.expiresAt !== "never" &&
+                    typeof parsedLinkInfo.expiresAt === "string" &&
+                    parsedLinkInfo.expiresAt !== "never" &&
                     `This link will expire  ${timeago.format(
                       parsedLinkInfo.expiresAt
                     )}`}
@@ -115,7 +116,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     console.log(data);
 
     // check if the data is expired
-    if (data.expiresAt && data.expiresAt !== "never") {
+    if (
+      data.expiresAt &&
+      typeof data.expiresAt === "string" &&
+      data.expiresAt !== "never"
+    ) {
       const expiresAt = new Date(data?.expiresAt);
       const now = new Date();
       if (expiresAt < now) {

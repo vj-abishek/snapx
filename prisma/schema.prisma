@@ -1,173 +1,170 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider     = "mysql"
-    url          = env("DATABASE_URL")
-    relationMode = "prisma"
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 // Necessary for Next auth
 model Account {
-    id                String  @id @default(cuid())
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String? @db.Text
-    access_token      String? @db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String? @db.Text
-    session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
-    @@index([userId])
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@index([userId])
+  @@index([userId])
 }
 
 model User {
-    id            String        @id @default(cuid())
-    name          String?
-    email         String?       @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    video         Video[]
-    comments      Comments[]
-    likes         Likes[]
-    reply         Reply[]
-    instantLink   InstantLink[]
-    sharedWith    SharedWith[]
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  video         Video[]
+  comments      Comments[]
+  likes         Likes[]
+  reply         Reply[]
+  instantLink   InstantLink[]
+  sharedWith    SharedWith[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
 }
 
 model Video {
-    id             String         @id
-    title          String
-    videoUid       String?
-    screenUid      String?
-    createdAt      DateTime       @default(now())
-    updatedAt      DateTime       @updatedAt
-    user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId         String
-    description    String?
-    duration       Int?
-    thumbnail      String?
-    comments       Comments[]
-    likes          Likes[]
-    reply          Reply[]
-    instantLink    InstantLink?   @relation(fields: [instantLinkId], references: [linkId])
-    instantLinkId  String?
-    sharedLinkType SharedLinkType @default(PUBLIC)
-    sharedWith     SharedWith[]
+  id             String         @id
+  title          String
+  videoUid       String?
+  screenUid      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  description    String?
+  duration       Int?
+  thumbnail      String?
+  comments       Comments[]
+  likes          Likes[]
+  reply          Reply[]
+  instantLink    InstantLink?   @relation(fields: [instantLinkId], references: [linkId])
+  instantLinkId  String?
+  sharedLinkType SharedLinkType @default(PUBLIC)
+  sharedWith     SharedWith[]
 
-    @@index([userId])
-    @@index([instantLinkId])
+  @@index([userId])
+  @@index([instantLinkId])
 }
 
 enum SharedLinkType {
-    PUBLIC
-    PRIVATE
+  PUBLIC
+  PRIVATE
 }
 
 model SharedWith {
-    id      String         @id @default(cuid())
-    video   Video          @relation(fields: [videoId], references: [id])
-    videoId String
-    user    User?          @relation(fields: [emailId], references: [email])
-    emailId String?
-    role    SharedWithRole @default(VIEWER)
+  id      String         @id @default(cuid())
+  video   Video          @relation(fields: [videoId], references: [id])
+  videoId String
+  user    User?          @relation(fields: [emailId], references: [email])
+  emailId String?
+  role    SharedWithRole @default(VIEWER)
 
-    @@index([videoId])
-    @@index([emailId])
+  @@index([videoId])
+  @@index([emailId])
 }
 
 enum SharedWithRole {
-    OWNER
-    VIEWER
-    EDITOR
+  OWNER
+  VIEWER
+  EDITOR
 }
 
 model Comments {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    comment   String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId    String
-    video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
-    videoId   String
-    reply     Reply[]
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  comment   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId   String
+  reply     Reply[]
 
-    @@index([userId])
-    @@index([videoId])
+  @@index([userId])
+  @@index([videoId])
 }
 
 model Reply {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    comment   String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId    String
-    video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
-    videoId   String
-    commentId String
-    Comments  Comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  comment   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId   String
+  commentId String
+  Comments  Comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
-    @@index([userId])
-    @@index([videoId])
-    @@index([commentId])
+  @@index([userId])
+  @@index([videoId])
+  @@index([commentId])
 }
 
 model Likes {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId    String
-    video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
-    videoId   String
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId   String
 
-    @@index([userId])
-    @@index([videoId])
+  @@index([userId])
+  @@index([videoId])
 }
 
 model InstantLink {
-    id          String   @id @default(cuid())
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    linkId      String   @unique
-    expiresAt   String?
-    title       String
-    description String?  @db.Text
-    userId      String
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    video       Video[]
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  linkId      String    @unique
+  expiresAt   DateTime?
+  title       String
+  description String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video       Video[]
 
-    @@index([userId])
+  @@index([userId])
 }
